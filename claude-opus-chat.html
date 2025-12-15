@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Opus 4.5 Chat - OpenRouter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .header-stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+            font-size: 12px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 15px;
+        }
+
+        .stat-badge.active-model {
+            background: rgba(255,255,255,0.4);
+            font-weight: 700;
+            border: 2px solid white;
+        }
+
+        .settings {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .settings-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .settings-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .setting-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .setting-group.full-width {
+            flex: 100%;
+        }
+
+        .setting-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .setting-group input[type="password"],
+        .setting-group input[type="number"],
+        .setting-group input[type="range"],
+        .setting-group select,
+        .setting-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .setting-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+        }
+
+        .slider-value {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .test-btn {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .test-btn:hover {
+            background: #218838;
+        }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: #ccc;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle.active {
+            background: #667eea;
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            top: 3px;
+            left: 3px;
+            transition: left 0.3s;
+        }
+
+        .toggle.active::after {
+            left: 27px;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 320px;
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            font-size: 14px;
+            color: #667eea;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .sidebar textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 30px;
+            background: #ffffff;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message-header {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .model-indicator {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .cost-indicator {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .message.user .message-header {
+            color: #667eea;
+        }
+
+        .message.assistant .message-header {
+            color: #764ba2;
+        }
+
+        .message-content {
+            padding: 15px;
+            border-radius: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: #e3e8ff;
+            color: #333;
+        }
+
+        .message.assistant .message-content {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .code-download {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-top: 10px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+
+        .code-download:hover {
+            transform: scale(1.02);
+        }
+
+        .thinking-block {
+            background: #fff9e6;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .thinking-block strong {
+            color: #f57c00;
+            display: block;
+            margin-bottom: 5px;
+            font-style: normal;
+        }
+
+        .input-area {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 14px;
+            resize: none;
+            font-family: inherit;
+        }
+
+        button {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .button-group button {
+            flex: 1;
+            background: #6c757d;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .error {
+            background: #fee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            color: #c62828;
+        }
+
+        .success {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            color: #2e7d32;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #0d47a1;
+        }
+
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #e65100;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+                max-height: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .settings-row {
+                flex-direction: column;
+            }
+            
+            .container {
+                height: 95vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Claude Opus 4.5 Chat</h1>
+            <p>Advanced Game Development & Debugging Assistant</p>
+            <div class="header-stats">
+                <div class="stat-badge active-model" id="currentModel">Model: Not connected</div>
+                <div class="stat-badge" id="totalCost">Cost: $0.00</div>
+                <div class="stat-badge" id="tempDisplay">Temperature: 0.3</div>
+                <div class="stat-badge" id="tokenDisplay">Tokens: 0</div>
+            </div>
+        </div>
+
+        <div class="settings">
+            <div class="settings-row">
+                <div class="setting-group" style="flex: 2;">
+                    <label>OpenRouter API Key</label>
+                    <input type="password" id="apiKey" placeholder="sk-or-v1-...">
+                </div>
+                <div class="setting-group">
+                    <label>&nbsp;</label>
+                    <button class="test-btn" onclick="testConnection()">🔌 Test Connection</button>
+                </div>
+                <div class="setting-group">
+                    <label>Model</label>
+                    <select id="model">
+                        <option value="anthropic/claude-opus-4.5">Claude Opus 4.5 (Best for debugging)</option>
+                        <option value="anthropic/claude-sonnet-4.5">Claude Sonnet 4.5 (Faster)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="settings-row">
+                <div class="setting-group">
+                    <label>Extended Thinking (Recommended for debugging)</label>
+                    <div class="toggle-group">
+                        <div class="toggle" id="thinkingToggle"></div>
+                        <span id="thinkingStatus">Off</span>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <label>Temperature (Lower = More Consistent) <span id="tempValue">0.3</span></label>
+                    <div class="slider-container">
+                        <input type="range" id="temperature" min="0" max="100" value="30" step="1">
+                        <span class="slider-value" id="tempValueDisplay">0.3</span>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <label>Max Response Tokens</label>
+                    <input type="number" id="maxTokens" value="8000" min="1000" max="16000" step="1000">
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <h3>📋 Project Context</h3>
+                    <p style="font-size: 12px; color: #666; margin-bottom: 8px;">Describe your game/project so Claude remembers:</p>
+                    <textarea id="projectContext" placeholder="Example: I'm building a Pong game. It has two paddles, a ball, and score tracking. Currently working on collision detection..."></textarea>
+                    <button style="width: 100%; margin-top: 10px; font-size: 13px;" onclick="saveProjectContext()">💾 Save Context</button>
+                </div>
+                
+                <div class="sidebar-section">
+                    <div class="info-box">
+                        <strong>💡 Tips for Better Results:</strong><br>
+                        • Turn on Extended Thinking for debugging<br>
+                        • Keep Temperature at 0.3 for consistency<br>
+                        • Add project context above<br>
+                        • Be specific about errors you're seeing
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-area" id="chatArea">
+                <div class="warning-box">
+                    🎯 <strong>For Best Debugging Results:</strong><br>
+                    1. Fill in the Project Context (left sidebar)<br>
+                    2. Turn ON Extended Thinking<br>
+                    3. Tell Claude the specific error or issue you're seeing<br>
+                    4. Paste any error messages
+                </div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div>🤔 Claude is analyzing...</div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-container">
+                <textarea id="userInput" rows="3" placeholder="Describe the issue with your game or what you need..."></textarea>
+                <button id="sendBtn" onclick="sendMessage()">Send</button>
+            </div>
+            <div class="button-group">
+                <button onclick="clearChat()">Clear Chat</button>
+                <button onclick="exportChat()">Export History</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let conversationHistory = [];
+        let extendedThinking = false;
+        let totalCost = 0;
+        let projectContext = '';
+        let lastTokenCount = 0;
+
+        const MODEL_PRICING = {
+            'anthropic/claude-opus-4.5': { input: 5, output: 25 },
+            'anthropic/claude-sonnet-4.5': { input: 3, output: 15 }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEverything();
+
+            const toggle = document.getElementById('thinkingToggle');
+            toggle.addEventListener('click', () => {
+                extendedThinking = !extendedThinking;
+                toggle.classList.toggle('active');
+                document.getElementById('thinkingStatus').textContent = extendedThinking ? 'On ✓' : 'Off';
+            });
+
+            const tempSlider = document.getElementById('temperature');
+            tempSlider.addEventListener('input', (e) => {
+                const temp = (e.target.value / 100).toFixed(2);
+                document.getElementById('tempValueDisplay').textContent = temp;
+                document.getElementById('tempDisplay').textContent = `Temperature: ${temp}`;
+            });
+
+            document.getElementById('userInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
+
+        function saveProjectContext() {
+            projectContext = document.getElementById('projectContext').value.trim();
+            localStorage.setItem('project_context', projectContext);
+            showSuccess('✅ Project context saved!');
+        }
+
+        function loadEverything() {
+            const savedKey = localStorage.getItem('openrouter_api_key');
+            if (savedKey) {
+                document.getElementById('apiKey').value = savedKey;
+            }
+
+            const savedCost = localStorage.getItem('total_cost');
+            if (savedCost) {
+                totalCost = parseFloat(savedCost);
+                updateCostDisplay();
+            }
+
+            const savedProject = localStorage.getItem('project_context');
+            if (savedProject) {
+                projectContext = savedProject;
+                document.getElementById('projectContext').value = savedProject;
+            }
+
+            const savedHistory = localStorage.getItem('conversation_history');
+            if (savedHistory) {
+                try {
+                    conversationHistory = JSON.parse(savedHistory);
+                    conversationHistory.forEach(msg => {
+                        if (msg.role === 'user') {
+                            addMessage('user', msg.content, false);
+                        } else {
+                            displayAssistantMessage(msg, null, null, null, false);
+                        }
+                    });
+                    
+                    if (conversationHistory.length > 0) {
+                        showSuccess('💾 Previous conversation loaded!');
+                    }
+                } catch (e) {
+                    console.error('Error loading history:', e);
+                }
+            }
+
+            if (conversationHistory.length === 0) {
+                const welcome = {
+                    role: 'assistant',
+                    content: '👋 Hello! I\'m Claude Opus 4.5, optimized for game development and debugging.\n\nFor best results:\n1. Add your project context in the left sidebar\n2. Turn on Extended Thinking for debugging\n3. Be specific about errors or issues\n\nI remember everything, so I can help you iterate on your game!'
+                };
+                displayAssistantMessage(welcome, 'anthropic/claude-opus-4.5', null, null, false);
+            }
+        }
+
+        function saveEverything() {
+            localStorage.setItem('conversation_history', JSON.stringify(conversationHistory));
+            localStorage.setItem('total_cost', totalCost);
+            localStorage.setItem('project_context', projectContext);
+        }
+
+        async function testConnection() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            
+            if (!apiKey) {
+                showError('Please enter your API key first');
+                return;
+            }
+
+            const chatArea = document.getElementById('chatArea');
+            const testDiv = document.createElement('div');
+            testDiv.className = 'loading active';
+            testDiv.textContent = '🔌 Testing connection...';
+            chatArea.appendChild(testDiv);
+
+            try {
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`,
+                        'HTTP-Referer': window.location.href,
+                        'X-Title': 'Claude Opus Chat'
+                    },
+                    body: JSON.stringify({
+                        model: document.getElementById('model').value,
+                        messages: [{ role: 'user', content: 'Hi' }],
+                        max_tokens: 10,
+                        provider: { order: ['Anthropic'] }
+                    })
+                });
+
+                testDiv.remove();
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('currentModel').textContent = `✓ CONNECTED: ${data.model}`;
+                    localStorage.setItem('openrouter_api_key', apiKey);
+                    showSuccess(`✅ Connection successful!\n\nConfirmed using: ${data.model}`);
+                } else {
+                    const error = await response.json();
+                    showError(`❌ Connection failed: ${error.error?.message || response.statusText}`);
+                }
+            } catch (error) {
+                testDiv.remove();
+                showError(`❌ Connection error: ${error.message}`);
+            }
+        }
+
+        function calculateCost(usage, model) {
+            if (!usage || !MODEL_PRICING[model]) return 0;
+            
+            const pricing = MODEL_PRICING[model];
+            const inputCost = (usage.prompt_tokens / 1000000) * pricing.input;
+            const outputCost = (usage.completion_tokens / 1000000) * pricing.output;
+            
+            return inputCost + outputCost;
+        }
+
+        function updateCostDisplay() {
+            document.getElementById('totalCost').textContent = `Cost: $${totalCost.toFixed(4)}`;
+        }
+
+        async function sendMessage() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const userInput = document.getElementById('userInput').value.trim();
+            const model = document.getElementById('model').value;
+
+            if (!apiKey) {
+                showError('Please enter your OpenRouter API key');
+                return;
+            }
+
+            if (!userInput) return;
+
+            localStorage.setItem('openrouter_api_key', apiKey);
+
+            addMessage('user', userInput, true);
+            document.getElementById('userInput').value = '';
+
+            conversationHistory.push({ role: 'user', content: userInput });
+            saveEverything();
+
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('sendBtn').disabled = true;
+
+            try {
+                const messages = [...conversationHistory];
+                
+                // Add project context as system message if provided
+                if (projectContext) {
+                    messages.unshift({
+                        role: 'system',
+                        content: `PROJECT CONTEXT: ${projectContext}\n\nUse this context to better understand the user's questions and provide relevant, accurate answers.`
+                    });
+                }
+
+                const temperature = parseFloat(document.getElementById('temperature').value) / 100;
+
+                const requestBody = {
+                    model: model,
+                    messages: messages,
+                    max_tokens: parseInt(document.getElementById('maxTokens').value),
+                    temperature: temperature,
+                    provider: { order: ['Anthropic'] }
+                };
+
+                if (extendedThinking) {
+                    requestBody.thinking = {
+                        type: 'enabled',
+                        budget_tokens: 10000
+                    };
+                }
+
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`,
+                        'HTTP-Referer': window.location.href,
+                        'X-Title': 'Claude Opus Chat'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `API Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const assistantMessage = data.choices[0].message;
+                
+                const cost = calculateCost(data.usage, data.model);
+                totalCost += cost;
+                updateCostDisplay();
+
+                if (data.usage) {
+                    lastTokenCount = data.usage.total_tokens;
+                    document.getElementById('tokenDisplay').textContent = `Tokens: ${lastTokenCount.toLocaleString()}`;
+                }
+
+                if (data.model) {
+                    document.getElementById('currentModel').textContent = `✓ USING: ${data.model}`;
+                }
+
+                conversationHistory.push(assistantMessage);
+                saveEverything();
+                
+                displayAssistantMessage(assistantMessage, data.model, cost, data.usage, true);
+
+            } catch (error) {
+                showError(`Error: ${error.message}`);
+                console.error('Full error:', error);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('sendBtn').disabled = false;
+            }
+        }
+
+        function displayAssistantMessage(message, modelUsed, cost, usage, addDownloadButton = true) {
+            const chatArea = document.getElementById('chatArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message assistant';
+
+            let html = '<div class="message-header">Claude Opus 4.5';
+            if (modelUsed) {
+                html += `<span class="model-indicator">${modelUsed}</span>`;
+            }
+            if (cost !== undefined && cost !== null) {
+                html += `<span class="cost-indicator">$${cost.toFixed(4)}</span>`;
+            }
+            html += '</div>';
+
+            let textContent = '';
+            
+            if (Array.isArray(message.content)) {
+                message.content.forEach(block => {
+                    if (block.type === 'thinking') {
+                        html += `<div class="thinking-block">
+                            <strong>🧠 Extended Thinking:</strong>
+                            ${escapeHtml(block.thinking)}
+                        </div>`;
+                    } else if (block.type === 'text') {
+                        textContent += block.text;
+                    }
+                });
+            } else {
+                textContent = message.content;
+            }
+
+            html += `<div class="message-content">${escapeHtml(textContent)}</div>`;
+
+            const hasCode = textContent.includes('<!DOCTYPE') || 
+                           textContent.includes('<html') || 
+                           textContent.includes('function ') ||
+                           textContent.includes('const ') ||
+                           textContent.includes('class ') ||
+                           textContent.length > 500;
+
+            if (hasCode && addDownloadButton) {
+                const downloadId = 'download_' + Math.random().toString(36).substr(2, 9);
+                html += `<div class="code-download" id="${downloadId}">
+                    📥 Download This Code as a File
+                </div>`;
+                
+                setTimeout(() => {
+                    const btn = document.getElementById(downloadId);
+                    if (btn) {
+                        btn.onclick = () => promptDownload(textContent);
+                    }
+                }, 100);
+            }
+
+            messageDiv.innerHTML = html;
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function promptDownload(content) {
+            const filename = prompt('What should we name this file?\n\nExamples:\n• game.html\n• script.js\n• style.css', 'game.html');
+            
+            if (filename) {
+                downloadFile(filename, content);
+                showSuccess(`✅ Downloaded: ${filename}`);
+            }
+        }
+
+        function downloadFile(filename, content) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function addMessage(role, content, shouldSave = true) {
+            const chatArea = document.getElementById('chatArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">${role === 'user' ? 'You' : 'Claude'}</div>
+                <div class="message-content">${escapeHtml(content)}</div>
+            `;
+            
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function showError(message) {
+            const chatArea = document.getElementById('chatArea');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            chatArea.appendChild(errorDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function showSuccess(message) {
+            const chatArea = document.getElementById('chatArea');
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success';
+            successDiv.textContent = message;
+            chatArea.appendChild(successDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+            
+            setTimeout(() => successDiv.remove(), 3000);
+        }
+
+        function clearChat() {
+            if (confirm('Clear all messages and start fresh?\n\n(Project context and cost tracking will be preserved)')) {
+                conversationHistory = [];
+                saveEverything();
+                
+                document.getElementById('chatArea').innerHTML = `
+                    <div class="warning-box">
+                        🎯 <strong>For Best Debugging Results:</strong><br>
+                        1. Fill in the Project Context (left sidebar)<br>
+                        2. Turn ON Extended Thinking<br>
+                        3. Tell Claude the specific error or issue you're seeing<br>
+                        4. Paste any error messages
+                    </div>
+                `;
+
+                const welcome = {
+                    role: 'assistant',
+                    content: '👋 Chat cleared! Ready to help with your game development.'
+                };
+                displayAssistantMessage(welcome, 'anthropic/claude-opus-4.5', null, null, false);
+            }
+        }
+
+        function exportChat() {
+            const chatContent = conversationHistory.map(msg => {
+                if (msg.role === 'user') {
+                    return `YOU: ${msg.content}`;
+                } else {
+                    if (Array.isArray(msg.content)) {
+                        return msg.content.map(block => {
+                            if (block.type === 'thinking') {
+                                return `CLAUDE (Thinking): ${block.thinking}`;
+                            } else {
+                                return `CLAUDE: ${block.text}`;
+                            }
+                        }).join('\n\n');
+                    } else {
+                        return `CLAUDE: ${msg.content}`;
+                    }
+                }
+            }).join('\n\n---\n\n');
+
+            downloadFile(`chat-history-${new Date().toISOString().slice(0,10)}.txt`, chatContent);
+            showSuccess('✅ Chat history exported!');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
